@@ -1,22 +1,18 @@
-/*
- DwK lead-capture bridge — GoodLife prototype integration.
- Production: set DWK_WEBHOOK to a secure HTTPS ingestion endpoint.
- Never place database keys or privileged tokens in this public file.
-*/
+/* DwK live lead bridge — GoodLife */
 (()=>{"use strict";
 const CONFIG={
  businessId:"goodlife",
  businessName:"GoodLife Awnings & Pavings",
  commissionRate:5,
  schemaVersion:"dwk.lead.v1",
- webhook:"",
+ supabaseUrl:"https://gmytxjtwemxjdnzzarvu.supabase.co",
+ publishableKey:"sb_publishable_Sdi60ctFxmet-WYtQOwkfw_ZS7R_5Jj",
  queueKey:"dwk_goodlife_lead_queue",
  consentVersion:"2026-09"
 };
 const frame=document.getElementById("goodlifeSite"),status=document.getElementById("dwkStatus");
 const source=()=>{
- const p=new URLSearchParams(location.search);
- const ref=document.referrer||"";
+ const p=new URLSearchParams(location.search),ref=document.referrer||"";
  let channel=p.get("utm_source")||p.get("source")||"Direct";
  if(!p.get("utm_source")){
   if(/google/i.test(ref))channel="Google";
@@ -49,13 +45,36 @@ const makeLead=doc=>{
  };
 };
 async function deliver(lead){
- queue(lead);
- if(!CONFIG.webhook)return {queued:true};
  try{
-  const res=await fetch(CONFIG.webhook,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(lead),credentials:"omit",referrerPolicy:"strict-origin"});
-  if(!res.ok)throw new Error("Ingestion failed");
-  return {sent:true};
- }catch(e){return {queued:true,error:true}}
+  const response=await fetch(CONFIG.supabaseUrl+"/rest/v1/rpc/submit_goodlife_lead",{
+   method:"POST",
+   headers:{
+    apikey:CONFIG.publishableKey,
+    Authorization:"Bearer "+CONFIG.publishableKey,
+    "Content-Type":"application/json"
+   },
+   body:JSON.stringify({
+    p_contact:lead.contact,
+    p_phone:lead.phone,
+    p_service:lead.service,
+    p_notes:lead.notes,
+    p_source_channel:lead.source.channel,
+    p_source_campaign:lead.source.campaign,
+    p_source_medium:lead.source.medium,
+    p_referrer:lead.source.referrer,
+    p_origin:lead.origin,
+    p_consent_version:lead.consent.version
+   }),
+   credentials:"omit",
+   referrerPolicy:"strict-origin"
+  });
+  if(!response.ok){const body=await response.text();throw new Error(body||"Submission failed");}
+  const result=await response.json();
+  return {sent:true,reference:result.reference};
+ }catch(error){
+  queue(lead);
+  return {queued:true,error:true};
+ }
 }
 function attach(){
  let doc;
@@ -70,14 +89,22 @@ function attach(){
  note.innerHTML='<input id="dwkConsent" type="checkbox" required style="width:auto;margin-top:3px"> <span>I agree that GoodLife may use these details to respond to my quotation request. My information will not be used for unrelated marketing.</span>';
  const submit=form.querySelector('button[type="submit"]');
  form.insertBefore(note,submit);
- form.addEventListener("submit",async e=>{
+ form.addEventListener("submit",async event=>{
   const consent=doc.getElementById("dwkConsent");
-  if(!consent?.checked){e.preventDefault();consent?.focus();return}
+  if(!consent?.checked){event.preventDefault();consent?.focus();return}
+  event.preventDefault();
   const lead=makeLead(doc);
+  status.textContent="Recording enquiry…";
   const result=await deliver(lead);
-  status.textContent=result.sent?"Enquiry recorded securely":"Enquiry recorded for DwK test";
-  status.className="saved";
-  window.dispatchEvent(new CustomEvent("dwk:lead-captured",{detail:{id:lead.id,business:lead.business}}));
+  if(result.sent){
+   status.textContent="Enquiry recorded • "+result.reference;
+   status.className="saved";
+   form.reset();
+  }else{
+   status.textContent="Connection unavailable—enquiry saved on this device";
+   status.className="";
+  }
+  window.dispatchEvent(new CustomEvent("dwk:lead-captured",{detail:{id:result.reference||lead.id,business:lead.business}}));
  },true);
  ["callBtn","waBtn","mailBtn","heroWa"].forEach(id=>{
   doc.getElementById(id)?.addEventListener("click",()=>{
@@ -90,11 +117,4 @@ function attach(){
  status.className="ready";
 }
 frame.addEventListener("load",attach);
-window.DwKGoodLife={
- exportQueue(){
-  const payload={leads:JSON.parse(localStorage.getItem(CONFIG.queueKey)||"[]"),events:JSON.parse(localStorage.getItem("dwk_goodlife_contact_events")||"[]")};
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}));a.download="goodlife-dwk-leads.json";a.click();URL.revokeObjectURL(a.href);
- },
- clearTestData(){localStorage.removeItem(CONFIG.queueKey);localStorage.removeItem("dwk_goodlife_contact_events")}
-};
 })();
