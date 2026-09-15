@@ -85,9 +85,9 @@ function makeContactEvent(label){
   business:CONFIG.businessId,
   company:"Website contact click",
   contact:"Anonymous website visitor",
-  phone:"",
+  phone:"0000000000",
   service:label,
-  notes:label+" recorded on the GoodLife website. This confirms button intent only, not a completed call or sent email.",
+  notes:label+" recorded on the GoodLife website. This confirms button intent only, not a completed call or sent email. 0000000000 is a technical placeholder, not a customer number.",
   source:{...attribution,channel:"Website "+label},
   stage:"New",
   value:0,
@@ -159,7 +159,7 @@ function attach(){
  },true);
  Object.entries(contactReveal).forEach(([id,item])=>{
   const button=doc.getElementById(id);
-  button?.addEventListener("click",event=>{
+  button?.addEventListener("click",async event=>{
    if(button.dataset.revealed==="true")return;
    event.preventDefault();
    const destination=button.href;
@@ -170,10 +170,11 @@ function attach(){
    const events=JSON.parse(localStorage.getItem("dwk_goodlife_contact_events")||"[]");
    events.push({id:"EV-"+Date.now(),business:CONFIG.businessId,type:id,source:source(),createdAt:new Date().toISOString()});
    localStorage.setItem("dwk_goodlife_contact_events",JSON.stringify(events.slice(-200)));
-   deliver(makeContactEvent(item.label));
-   status.textContent=item.label+" recorded";
-   status.className="saved";
    if(item.openImmediately)frame.contentWindow.open(destination,"_blank");
+   status.textContent="Recording "+item.label.toLowerCase()+"…";
+   const result=await deliver(makeContactEvent(item.label));
+   if(result.sent){status.textContent=item.label+" recorded • "+result.reference;status.className="saved"}
+   else{status.textContent="Tracking connection unavailable—event saved on this device";status.className=""}
   });
  });
  status.textContent="DwK lead capture ready";
