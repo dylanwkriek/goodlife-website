@@ -101,8 +101,8 @@ function makeContactEvent(label){
 function attach(){
  let doc;
  try{doc=frame.contentDocument||frame.contentWindow.document}catch(e){status.textContent="DwK bridge unavailable";return}
- doc.getElementById("topEmail")?.closest("span")?.remove();
- doc.getElementById("topWeb")?.closest("span")?.remove();
+ const topContactRow=doc.getElementById("topPhone")?.parentElement?.parentElement;
+ if(topContactRow)topContactRow.remove();
  const heroWhatsApp=doc.getElementById("heroWa");
  const heroServices=doc.querySelector('.hero .actions a[href="#work"]');
  if(heroWhatsApp)heroWhatsApp.remove();
