@@ -121,6 +121,15 @@ function attach(){
   ownerLogoPanel?.remove();
   if(ownerBox)ownerBox.style.gridColumn="1/-1";
  }
+ const contactReveal={
+  callBtn:{label:"Call click",displayId:"phoneDisplay",nextLabel:"Call Grant Now",openImmediately:false},
+  waBtn:{label:"WhatsApp click",displayId:"whatsappDisplay",nextLabel:"Open WhatsApp Again",openImmediately:true},
+  mailBtn:{label:"Email click",displayId:"emailDisplay",nextLabel:"Compose Email",openImmediately:false}
+ };
+ Object.values(contactReveal).forEach(item=>{
+  const line=doc.getElementById(item.displayId)?.closest(".line");
+  if(line){line.hidden=true;line.setAttribute("aria-hidden","true")}
+ });
  const form=doc.querySelector("#contact form");
  if(!form){status.textContent="DwK quote form not found";return}
  if(form.dataset.dwkConnected)return;
@@ -148,13 +157,23 @@ function attach(){
   }
   window.dispatchEvent(new CustomEvent("dwk:lead-captured",{detail:{id:result.reference||lead.id,business:lead.business}}));
  },true);
- const trackedContactButtons={callBtn:"Call click",waBtn:"WhatsApp click",mailBtn:"Email click"};
- Object.keys(trackedContactButtons).forEach(id=>{
-  doc.getElementById(id)?.addEventListener("click",()=>{
+ Object.entries(contactReveal).forEach(([id,item])=>{
+  const button=doc.getElementById(id);
+  button?.addEventListener("click",event=>{
+   if(button.dataset.revealed==="true")return;
+   event.preventDefault();
+   const destination=button.href;
+   button.dataset.revealed="true";
+   const line=doc.getElementById(item.displayId)?.closest(".line");
+   if(line){line.hidden=false;line.removeAttribute("aria-hidden")}
+   button.textContent=item.nextLabel;
    const events=JSON.parse(localStorage.getItem("dwk_goodlife_contact_events")||"[]");
    events.push({id:"EV-"+Date.now(),business:CONFIG.businessId,type:id,source:source(),createdAt:new Date().toISOString()});
    localStorage.setItem("dwk_goodlife_contact_events",JSON.stringify(events.slice(-200)));
-   deliver(makeContactEvent(trackedContactButtons[id]));
+   deliver(makeContactEvent(item.label));
+   status.textContent=item.label+" recorded";
+   status.className="saved";
+   if(item.openImmediately)frame.contentWindow.open(destination,"_blank");
   });
  });
  status.textContent="DwK lead capture ready";
