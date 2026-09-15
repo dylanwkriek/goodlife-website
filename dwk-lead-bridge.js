@@ -65,6 +65,7 @@ async function deliver(lead){
     p_origin:lead.origin,
     p_consent_version:lead.consent.version
    }),
+   keepalive:true,
    credentials:"omit",
    referrerPolicy:"strict-origin"
   });
@@ -76,9 +77,50 @@ async function deliver(lead){
   return {queued:true,error:true};
  }
 }
+function makeContactEvent(label){
+ const attribution=source();
+ return {
+  schema:CONFIG.schemaVersion,
+  id:"GL-EV-"+Date.now()+"-"+crypto.getRandomValues(new Uint32Array(1))[0].toString(16),
+  business:CONFIG.businessId,
+  company:"Website contact click",
+  contact:"Anonymous website visitor",
+  phone:"",
+  service:label,
+  notes:label+" recorded on the GoodLife website. This confirms button intent only, not a completed call or sent email.",
+  source:{...attribution,channel:"Website "+label},
+  stage:"New",
+  value:0,
+  probability:10,
+  commissionRate:CONFIG.commissionRate,
+  consent:{purpose:"Anonymous contact-action measurement",version:CONFIG.consentVersion,capturedAt:new Date().toISOString()},
+  createdAt:new Date().toISOString(),
+  origin:location.origin
+ };
+}
 function attach(){
  let doc;
  try{doc=frame.contentDocument||frame.contentWindow.document}catch(e){status.textContent="DwK bridge unavailable";return}
+ doc.getElementById("topEmail")?.closest("span")?.remove();
+ doc.getElementById("topWeb")?.closest("span")?.remove();
+ const heroWhatsApp=doc.getElementById("heroWa");
+ const heroServices=doc.querySelector('.hero .actions a[href="#work"]');
+ if(heroWhatsApp)heroWhatsApp.remove();
+ if(heroServices){heroServices.href="#services";heroServices.textContent="Explore Our Services";heroServices.className="btn primary"}
+ const ownerLogo=doc.querySelector("#about .gm img");
+ const ownerLogoPanel=doc.querySelector("#about .gm");
+ const ownerBox=doc.querySelector("#about .box");
+ const areaMark=doc.querySelector("#area .map");
+ if(ownerLogo&&areaMark){
+  const logo=ownerLogo.cloneNode(true);
+  logo.style.cssText="height:230px;width:100%;object-fit:contain";
+  areaMark.textContent="";
+  areaMark.style.cssText="display:grid;place-items:center;gap:12px;padding:24px";
+  areaMark.append(logo);
+  const caption=doc.createElement("strong");caption.textContent="SOUTH COAST • KZN";areaMark.append(caption);
+  ownerLogoPanel?.remove();
+  if(ownerBox)ownerBox.style.gridColumn="1/-1";
+ }
  const form=doc.querySelector("#contact form");
  if(!form){status.textContent="DwK quote form not found";return}
  if(form.dataset.dwkConnected)return;
@@ -106,11 +148,13 @@ function attach(){
   }
   window.dispatchEvent(new CustomEvent("dwk:lead-captured",{detail:{id:result.reference||lead.id,business:lead.business}}));
  },true);
- ["callBtn","waBtn","mailBtn","heroWa"].forEach(id=>{
+ const trackedContactButtons={callBtn:"Call click",waBtn:"WhatsApp click",mailBtn:"Email click"};
+ Object.keys(trackedContactButtons).forEach(id=>{
   doc.getElementById(id)?.addEventListener("click",()=>{
    const events=JSON.parse(localStorage.getItem("dwk_goodlife_contact_events")||"[]");
    events.push({id:"EV-"+Date.now(),business:CONFIG.businessId,type:id,source:source(),createdAt:new Date().toISOString()});
    localStorage.setItem("dwk_goodlife_contact_events",JSON.stringify(events.slice(-200)));
+   deliver(makeContactEvent(trackedContactButtons[id]));
   });
  });
  status.textContent="DwK lead capture ready";
