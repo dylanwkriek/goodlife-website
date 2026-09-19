@@ -207,5 +207,6 @@ function attach(){
  status.textContent="DwK lead capture ready";
  status.className="ready";
 }
-frame.addEventListener("load",attach);
+if(frame.contentDocument?.readyState==="complete")attach();
+else frame.addEventListener("load",attach,{once:true});
 })();
