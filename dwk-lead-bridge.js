@@ -207,6 +207,6 @@ function attach(){
  status.textContent="DwK lead capture ready";
  status.className="ready";
 }
-if(frame.contentDocument?.readyState==="complete")attach();
-else frame.addEventListener("load",attach,{once:true});
+frame.addEventListener("load",attach,{once:true});
+if(frame.contentDocument?.readyState==="complete"&&frame.contentDocument?.querySelector("#contact form"))attach();
 })();
