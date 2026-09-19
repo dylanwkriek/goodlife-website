@@ -101,6 +101,32 @@ function makeContactEvent(label){
 function attach(){
  let doc;
  try{doc=frame.contentDocument||frame.contentWindow.document}catch(e){status.textContent="DwK bridge unavailable";return}
+ const grantPhone="27637522149",grantPhoneDisplay="063 752 2149";
+ const retainingCard=[...doc.querySelectorAll(".card")].find(card=>card.querySelector("h3")?.textContent.trim()==="Retaining Walls");
+ const retainingImage=retainingCard?.querySelector("img");
+ if(retainingImage){
+  retainingImage.src="retaining-walls-grant.jpg";
+  retainingImage.alt="Completed curved block retaining wall installed by GoodLife";
+ }
+ const areaChips=doc.querySelector("#area .chips");
+ if(areaChips){
+  const existing=new Set([...areaChips.querySelectorAll(".chip")].map(chip=>chip.textContent.trim()));
+  const surrounding=[...areaChips.querySelectorAll(".chip")].find(chip=>chip.textContent.trim()==="Surrounding areas");
+  ["Trafalgar","Port Edward","Marina Beach"].forEach(place=>{
+   if(existing.has(place))return;
+   const chip=doc.createElement("span");chip.className="chip";chip.textContent=place;
+   areaChips.insertBefore(chip,surrounding||null);
+  });
+ }
+ const phoneDisplay=doc.getElementById("phoneDisplay"),whatsappDisplay=doc.getElementById("whatsappDisplay");
+ if(phoneDisplay)phoneDisplay.textContent=grantPhoneDisplay;
+ if(whatsappDisplay)whatsappDisplay.textContent=grantPhoneDisplay;
+ const callButton=doc.getElementById("callBtn"),whatsappButton=doc.getElementById("waBtn");
+ if(callButton)callButton.href=`tel:+${grantPhone}`;
+ if(whatsappButton){
+  const message="Hi, I found GoodLife Awnings and Pavings online and would like to request a quotation.";
+  whatsappButton.href=`https://wa.me/${grantPhone}?text=${encodeURIComponent(message)}`;
+ }
  const topContactRow=doc.getElementById("topPhone")?.parentElement?.parentElement;
  if(topContactRow)topContactRow.remove();
  const heroWhatsApp=doc.getElementById("heroWa");
@@ -132,6 +158,7 @@ function attach(){
  });
  const form=doc.querySelector("#contact form");
  if(!form){status.textContent="DwK quote form not found";return}
+ form.setAttribute("onsubmit",`event.preventDefault();const t='Hi, my name is '+nm.value+'. I need a quote for '+sv.value+'. My number is '+(ph.value||'not supplied')+'. Details: '+msg.value;window.open('https://wa.me/${grantPhone}?text='+encodeURIComponent(t),'_blank')`);
  if(form.dataset.dwkConnected)return;
  form.dataset.dwkConnected="true";
  const note=doc.createElement("label");
