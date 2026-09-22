@@ -161,6 +161,58 @@ function attach(){
    button.textContent="View Service";button.style.marginTop="16px";button.addEventListener("click",saveSelection);body.append(button);
   }
  });
+ const workSection=doc.getElementById("work");
+ const workHeading=workSection?.querySelector(".head h2");
+ if(workHeading)workHeading.textContent="Featured Completed Projects";
+ const gallery=workSection?.querySelector(".gallery");
+ if(gallery&&!gallery.dataset.carouselReady){
+  gallery.dataset.carouselReady="true";
+  const shots=[...gallery.querySelectorAll(".shot")];
+  if(shots.length){
+   const style=doc.createElement("style");style.id="goodlife-project-carousel";
+   style.textContent=`
+    #work .gallery{display:block;position:relative;overflow:hidden;border-radius:18px;background:#0b0b0b}
+    #work .gallery .shot{display:none;border-radius:18px;min-height:500px}
+    #work .gallery .shot.active{display:block;animation:goodlifeFade .45s ease}
+    #work .gallery .shot img{width:100%;height:500px;object-fit:cover}
+    .projectCarouselControls{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
+    .projectCarouselArrow{width:48px;height:48px;border:1px solid #7a1111;border-radius:50%;background:#111;color:#fff;font-size:30px;line-height:1;cursor:pointer}
+    .projectCarouselArrow:hover,.projectCarouselArrow:focus-visible{background:#f01818;outline:2px solid #ff8585;outline-offset:2px}
+    .projectCarouselDots{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+    .projectCarouselDot{width:11px;height:11px;padding:0;border:1px solid #ff4545;border-radius:50%;background:#321010;cursor:pointer}
+    .projectCarouselDot.active{background:#f01818;transform:scale(1.2)}
+    @keyframes goodlifeFade{from{opacity:.35;transform:scale(.995)}to{opacity:1;transform:scale(1)}}
+    @media(max-width:580px){#work .gallery .shot,#work .gallery .shot img{height:300px;min-height:300px}.projectCarouselControls{gap:10px}.projectCarouselArrow{width:44px;height:44px}}
+    @media(prefers-reduced-motion:reduce){#work .gallery .shot.active{animation:none}}
+   `;
+   doc.head.append(style);
+   const controls=doc.createElement("div");controls.className="projectCarouselControls";controls.setAttribute("aria-label","Completed project controls");
+   const previous=doc.createElement("button");previous.type="button";previous.className="projectCarouselArrow";previous.setAttribute("aria-label","Previous completed project");previous.textContent="‹";
+   const dots=doc.createElement("div");dots.className="projectCarouselDots";
+   const next=doc.createElement("button");next.type="button";next.className="projectCarouselArrow";next.setAttribute("aria-label","Next completed project");next.textContent="›";
+   controls.append(previous,dots,next);gallery.after(controls);
+   let current=0,timer;
+   const dotButtons=shots.map((shot,index)=>{
+    const dot=doc.createElement("button");dot.type="button";dot.className="projectCarouselDot";dot.setAttribute("aria-label","Show completed project "+(index+1));
+    dot.addEventListener("click",()=>show(index,true));dots.append(dot);return dot;
+   });
+   function show(index,manual=false){
+    current=(index+shots.length)%shots.length;
+    shots.forEach((shot,i)=>{const active=i===current;shot.classList.toggle("active",active);shot.setAttribute("aria-hidden",String(!active))});
+    dotButtons.forEach((dot,i)=>{const active=i===current;dot.classList.toggle("active",active);dot.setAttribute("aria-current",active?"true":"false")});
+    if(manual)restart();
+   }
+   function start(){clearInterval(timer);timer=setInterval(()=>show(current+1),5000)}
+   function stop(){clearInterval(timer)}
+   function restart(){stop();start()}
+   previous.addEventListener("click",()=>show(current-1,true));next.addEventListener("click",()=>show(current+1,true));
+   gallery.tabIndex=0;gallery.setAttribute("aria-label","Featured completed projects carousel");
+   gallery.addEventListener("keydown",event=>{if(event.key==="ArrowLeft"){event.preventDefault();show(current-1,true)}if(event.key==="ArrowRight"){event.preventDefault();show(current+1,true)}});
+   workSection.addEventListener("mouseenter",stop);workSection.addEventListener("mouseleave",start);
+   workSection.addEventListener("focusin",stop);workSection.addEventListener("focusout",event=>{if(!workSection.contains(event.relatedTarget))start()});
+   show(0);start();
+  }
+ }
  const retainingCard=[...doc.querySelectorAll(".card")].find(card=>card.querySelector("h3")?.textContent.trim()==="Retaining Walls");
  const retainingImage=retainingCard?.querySelector("img");
  if(retainingImage){
