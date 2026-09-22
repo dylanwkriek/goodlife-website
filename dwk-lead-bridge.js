@@ -102,6 +102,14 @@ function attach(){
  let doc;
  try{doc=frame.contentDocument||frame.contentWindow.document}catch(e){status.textContent="DwK bridge unavailable";return}
  const grantPhone="27637522149",grantPhoneDisplay="063 752 2149";
+ const brandLogo=doc.querySelector(".brand img");
+ const heroLogo=doc.querySelector(".hero > img");
+ if(brandLogo&&heroLogo){
+  heroLogo.src=brandLogo.src;
+  heroLogo.alt="GoodLife knight logo";
+  heroLogo.style.objectFit="contain";
+  heroLogo.style.background="#050505";
+ }
  const retainingCard=[...doc.querySelectorAll(".card")].find(card=>card.querySelector("h3")?.textContent.trim()==="Retaining Walls");
  const retainingImage=retainingCard?.querySelector("img");
  if(retainingImage){
