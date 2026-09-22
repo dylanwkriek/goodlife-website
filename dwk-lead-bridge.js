@@ -122,6 +122,45 @@ function attach(){
   logoName.style.cssText="position:absolute;left:50%;bottom:18px;transform:translateX(-50%);color:#fff;font-size:clamp(34px,5vw,62px);font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;text-shadow:0 3px 12px #000,0 0 20px #e00000";
   logoLockup.append(logoName);
  }
+ const homeNav=doc.querySelector("header nav");
+ if(homeNav&&!homeNav.querySelector('[data-home-link]')){
+  const homeLink=doc.createElement("a");
+  homeLink.href="#";homeLink.textContent="Home";homeLink.dataset.homeLink="true";
+  homeNav.prepend(homeLink);
+ }
+ const serviceSlugs={
+  "Aluminum Carports/Awnings":"aluminum-carports-awnings",
+  "Colorplus Carports and Awnings":"colorplus-carports-awnings",
+  "Shadenets":"shadenets",
+  "Patio / Balcony Awnings":"patio-balcony-awnings",
+  "Retaining Walls":"retaining-walls",
+  "Driveway Paving":"driveway-paving",
+  "Walkway Paving":"walkway-paving",
+  "Other":"other"
+ };
+ [...doc.querySelectorAll(".card")].forEach(card=>{
+  const title=card.querySelector("h3")?.textContent.trim(),slug=serviceSlugs[title];
+  if(!slug||card.dataset.serviceLinked)return;
+  card.dataset.serviceLinked="true";card.tabIndex=0;card.setAttribute("role","link");
+  card.setAttribute("aria-label","View "+title);
+  card.style.cssText+=";cursor:pointer;transition:transform .2s ease,box-shadow .2s ease";
+  const destination=`service.html?service=${encodeURIComponent(slug)}`;
+  const saveSelection=()=>{
+   const image=card.querySelector("img")?.src;
+   if(image)localStorage.setItem("goodlife_service_image_"+slug,image);
+   if(brandLogo?.src)localStorage.setItem("goodlife_brand_logo",brandLogo.src);
+  };
+  const openService=()=>{saveSelection();window.top.location.href=destination};
+  card.addEventListener("mouseenter",()=>{card.style.transform="translateY(-4px)";card.style.boxShadow="0 18px 38px #0008"});
+  card.addEventListener("mouseleave",()=>{card.style.transform="";card.style.boxShadow=""});
+  card.addEventListener("click",event=>{if(event.target.closest("a,button"))return;openService()});
+  card.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();openService()}});
+  const body=card.querySelector(".body");
+  if(body){
+   const button=doc.createElement("a");button.className="btn primary";button.href=destination;button.target="_top";
+   button.textContent="View Service";button.style.marginTop="16px";button.addEventListener("click",saveSelection);body.append(button);
+  }
+ });
  const retainingCard=[...doc.querySelectorAll(".card")].find(card=>card.querySelector("h3")?.textContent.trim()==="Retaining Walls");
  const retainingImage=retainingCard?.querySelector("img");
  if(retainingImage){
@@ -178,6 +217,13 @@ function attach(){
  });
  const form=doc.querySelector("#contact form");
  if(!form){status.textContent="DwK quote form not found";return}
+ const requestedService=new URLSearchParams(location.search).get("service");
+ if(requestedService){
+  const title=Object.keys(serviceSlugs).find(name=>serviceSlugs[name]===requestedService);
+  const select=doc.getElementById("sv");
+  if(title&&select)[...select.options].some(option=>{if(option.textContent.trim()===title){select.value=option.value;return true}return false});
+  if(location.hash==="#contact")setTimeout(()=>doc.getElementById("contact")?.scrollIntoView({behavior:"smooth"}),120);
+ }
  form.setAttribute("onsubmit",`event.preventDefault();const t='Hi, my name is '+nm.value+'. I need a quote for '+sv.value+'. My number is '+(ph.value||'not supplied')+'. Details: '+msg.value;window.open('https://wa.me/${grantPhone}?text='+encodeURIComponent(t),'_blank')`);
  if(form.dataset.dwkConnected)return;
  form.dataset.dwkConnected="true";
