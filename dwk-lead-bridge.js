@@ -175,14 +175,17 @@ function attach(){
     #work .gallery .shot{display:none;border-radius:18px;min-height:500px}
     #work .gallery .shot.active{display:block;animation:goodlifeFade .45s ease}
     #work .gallery .shot img{width:100%;height:500px;object-fit:cover}
-    .projectCarouselControls{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
-    .projectCarouselArrow{width:48px;height:48px;border:1px solid #7a1111;border-radius:50%;background:#111;color:#fff;font-size:30px;line-height:1;cursor:pointer}
-    .projectCarouselArrow:hover,.projectCarouselArrow:focus-visible{background:#f01818;outline:2px solid #ff8585;outline-offset:2px}
-    .projectCarouselDots{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
-    .projectCarouselDot{width:11px;height:11px;padding:0;border:1px solid #ff4545;border-radius:50%;background:#321010;cursor:pointer}
-    .projectCarouselDot.active{background:#f01818;transform:scale(1.2)}
+    .projectCarouselControls{position:absolute;inset:0;z-index:4;pointer-events:none}
+    .projectCarouselArrow{position:absolute;top:50%;width:54px;height:82px;padding:0;border:0;border-radius:0;background:transparent;color:transparent;font-size:0;cursor:pointer;transform:translateY(-50%);pointer-events:auto;transition:background .2s ease}
+    .projectCarouselArrow:first-child{left:8px}.projectCarouselArrow:last-child{right:8px}
+    .projectCarouselArrow::before{content:"";display:block;width:22px;height:22px;margin:auto;border-left:2px solid #fff;border-bottom:2px solid #fff;filter:drop-shadow(0 2px 5px #000)}
+    .projectCarouselArrow:first-child::before{transform:rotate(45deg)}.projectCarouselArrow:last-child::before{transform:rotate(225deg)}
+    .projectCarouselArrow:hover{background:#0003}.projectCarouselArrow:focus-visible{background:#0005;outline:2px solid #fff;outline-offset:-4px}
+    .projectCarouselDots{position:absolute;left:50%;bottom:16px;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 11px;border-radius:999px;background:#0008;transform:translateX(-50%);pointer-events:auto}
+    .projectCarouselDot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:#ffffffa6;cursor:pointer;transition:width .2s ease,background .2s ease}
+    .projectCarouselDot.active{width:24px;border-radius:999px;background:#f01818}
     @keyframes goodlifeFade{from{opacity:.35;transform:scale(.995)}to{opacity:1;transform:scale(1)}}
-    @media(max-width:580px){#work .gallery .shot,#work .gallery .shot img{height:300px;min-height:300px}.projectCarouselControls{gap:10px}.projectCarouselArrow{width:44px;height:44px}}
+    @media(max-width:580px){#work .gallery .shot,#work .gallery .shot img{height:300px;min-height:300px}.projectCarouselArrow{width:46px;height:68px}.projectCarouselArrow::before{width:17px;height:17px}.projectCarouselDots{bottom:12px}}
     @media(prefers-reduced-motion:reduce){#work .gallery .shot.active{animation:none}}
    `;
    doc.head.append(style);
@@ -190,7 +193,7 @@ function attach(){
    const previous=doc.createElement("button");previous.type="button";previous.className="projectCarouselArrow";previous.setAttribute("aria-label","Previous completed project");previous.textContent="‹";
    const dots=doc.createElement("div");dots.className="projectCarouselDots";
    const next=doc.createElement("button");next.type="button";next.className="projectCarouselArrow";next.setAttribute("aria-label","Next completed project");next.textContent="›";
-   controls.append(previous,dots,next);gallery.after(controls);
+   controls.append(previous,dots,next);gallery.append(controls);
    let current=0,timer;
    const dotButtons=shots.map((shot,index)=>{
     const dot=doc.createElement("button");dot.type="button";dot.className="projectCarouselDot";dot.setAttribute("aria-label","Show completed project "+(index+1));
