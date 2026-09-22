@@ -102,13 +102,25 @@ function attach(){
  let doc;
  try{doc=frame.contentDocument||frame.contentWindow.document}catch(e){status.textContent="DwK bridge unavailable";return}
  const grantPhone="27637522149",grantPhoneDisplay="063 752 2149";
+ const headerBrandName=doc.querySelector(".brand .logo");
+ if(headerBrandName)headerBrandName.innerHTML="<span>Awnings &amp; Pavings</span>";
  const brandLogo=doc.querySelector(".brand img");
+ const hero=doc.querySelector(".hero");
  const heroLogo=doc.querySelector(".hero > img");
- if(brandLogo&&heroLogo){
+ if(brandLogo&&hero&&heroLogo){
   heroLogo.src=brandLogo.src;
   heroLogo.alt="GoodLife knight logo";
-  heroLogo.style.objectFit="contain";
-  heroLogo.style.background="#050505";
+  heroLogo.style.cssText="width:100%;height:510px;object-fit:contain;background:#050505";
+  const logoLockup=doc.createElement("div");
+  logoLockup.className="hero-logo-lockup";
+  logoLockup.style.cssText="position:relative;display:grid;place-items:center;min-width:0";
+  hero.insertBefore(logoLockup,hero.firstElementChild);
+  logoLockup.append(heroLogo);
+  const logoName=doc.createElement("div");
+  logoName.textContent="GoodLife";
+  logoName.setAttribute("aria-label","GoodLife");
+  logoName.style.cssText="position:absolute;left:50%;bottom:18px;transform:translateX(-50%);color:#fff;font-size:clamp(34px,5vw,62px);font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;text-shadow:0 3px 12px #000,0 0 20px #e00000";
+  logoLockup.append(logoName);
  }
  const retainingCard=[...doc.querySelectorAll(".card")].find(card=>card.querySelector("h3")?.textContent.trim()==="Retaining Walls");
  const retainingImage=retainingCard?.querySelector("img");
