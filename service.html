@@ -17,7 +17,7 @@ footer{border-top:1px solid var(--line);padding:28px 0;color:#aaa}.foot{display:
 </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="brand" href="index.html" aria-label="GoodLife Home"><img id="brandLogo" alt="GoodLife knight logo"><span>Awnings &amp; Pavings</span></a><nav><a class="btn secondary" href="index.html">Home</a><a class="btn primary quote-link" href="index.html#contact">Request a Quote</a></nav></div></header>
+<header><div class="wrap nav"><a class="brand" href="index.html" aria-label="GoodLife Home"><img id="brandLogo" src="assets/images/goodlife-logo.webp" alt="GoodLife knight logo"><span>Awnings &amp; Pavings</span></a><nav><a class="btn secondary" href="index.html">Home</a><a class="btn primary quote-link" href="index.html#contact">Request a Quote</a></nav></div></header>
 <main id="page"><div class="loading">Loading GoodLife service…</div></main>
 <footer><div class="wrap foot"><strong>GoodLife Awnings &amp; Pavings</strong><span>KwaZulu-Natal South Coast</span></div></footer>
 <script>
@@ -35,25 +35,10 @@ const slug=new URLSearchParams(location.search).get("service")||"other";
 const item=services[slug]||services.other;
 document.title=item.title+" | GoodLife Awnings & Pavings";
 document.querySelectorAll(".quote-link").forEach(link=>link.href=`index.html?service=${encodeURIComponent(slug)}#contact`);
-async function loadImage(){
- const saved=localStorage.getItem("goodlife_service_image_"+slug);
- const savedLogo=localStorage.getItem("goodlife_brand_logo");
- if(savedLogo)document.getElementById("brandLogo").src=savedLogo;
- if(saved&&savedLogo)return saved;
- try{
-  const response=await fetch("GoodLife_Awnings_Pavings_Updated_Contacts%20(1).html");
-  const html=await response.text();
-  const doc=new DOMParser().parseFromString(html,"text/html");
-  const card=[...doc.querySelectorAll(".card")].find(node=>node.querySelector("h3")?.textContent.trim()===item.title);
-  const image=card?.querySelector("img")?.src||"";
-  const logo=doc.querySelector(".brand img")?.src||"";
-  if(logo)document.getElementById("brandLogo").src=logo;
-  return image||logo;
- }catch{return ""}
-}
+function loadImage(){return slug==="retaining-walls"?"assets/images/retaining-walls-project.jpg":`assets/images/service-${slug}.webp`}
 function list(items){return items.map(value=>`<li>${value}</li>`).join("")}
-async function render(){
- const image=await loadImage();
+function render(){
+ const image=loadImage();
  document.getElementById("page").innerHTML=`
   <div class="wrap crumb"><a href="index.html">Home</a> / ${item.title}</div>
   <section class="wrap hero">
